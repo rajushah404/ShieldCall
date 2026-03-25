@@ -16,53 +16,70 @@ class CallScreeningServiceImpl : CallScreeningService() {
     private lateinit var prefs: SharedPreferences
 
     override fun onScreenCall(callDetails: Call.Details) {
-        prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        try {
+            prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
 
-        val direction = callDetails.callDirection
-        if (direction != Call.Details.DIRECTION_INCOMING) {
-            respondToCall(callDetails, CallResponse.Builder().build())
-            return
-        }
+            val direction = callDetails.callDirection
+            if (direction != Call.Details.DIRECTION_INCOMING) {
+                allowCall(callDetails)
+                return
+            }
 
-        val handle = callDetails.handle
-        val phoneNumber = handle?.schemeSpecificPart ?: ""
-        
-        Log.d(TAG, "Screening incoming call from: $phoneNumber")
+            val handle = callDetails.handle
+            val phoneNumber = handle?.schemeSpecificPart ?: ""
+            Log.d(TAG, "Screening incoming call from: $phoneNumber")
 
-        val blockEnabled = prefs.getBoolean("flutter.blockEnabled", false)
-        if (!blockEnabled) {
+            val blockEnabled = prefs.getBoolean("flutter.blockEnabled", false)
+            if (!blockEnabled) {
+                Log.d(TAG, "Call blocking is disabled.")
+                allowCall(callDetails)
+                return
+            }
+
+            // Safe integer reading to prevent ClassCastException from Flutter's SharedPreferences
+            val maxCalls = getIntSafe(prefs, "flutter.maxCalls", 3)
+            val timeWindow = getIntSafe(prefs, "flutter.timeWindow", 5)
+            val focusMode = prefs.getBoolean("flutter.focusMode", false)
+            val whitelistMode = prefs.getBoolean("flutter.whitelistMode", false)
+
+            Log.d(TAG, "Rules: Whitelist=$whitelistMode, Focus=$focusMode, Max=$maxCalls/$timeWindow")
+
+            if (focusMode) {
+                if (!isStarredContact(phoneNumber)) {
+                    rejectCall(callDetails, "Focus Mode: Not a favorite")
+                    return
+                }
+            }
+
+            if (whitelistMode) {
+                if (!isContact(phoneNumber)) {
+                    rejectCall(callDetails, "Whitelist Mode: Not in contacts")
+                    return
+                }
+            }
+
+            if (isFrequencyExceeded(phoneNumber, maxCalls, timeWindow)) {
+                rejectCall(callDetails, "Frequency Limit: Exceeded")
+                return
+            }
+
+            Log.d(TAG, "Allowing call.")
             allowCall(callDetails)
-            return
+        } catch (e: Exception) {
+            Log.e(TAG, "Error screening call: ${e.message}", e)
+            allowCall(callDetails) // Default to allowing call if something fails
         }
+    }
 
-        val focusMode = prefs.getBoolean("flutter.focusMode", false)
-        val whitelistMode = prefs.getBoolean("flutter.whitelistMode", false)
-        val maxCalls = prefs.getInt("flutter.maxCalls", 3)
-        val timeWindow = prefs.getInt("flutter.timeWindow", 5) // in minutes
-
-        // 1. Focus Mode: Only Favorites
-        if (focusMode) {
-            if (!isStarredContact(phoneNumber)) {
-                rejectCall(callDetails, "Focus Mode: Not a favorite")
-                return
-            }
+    private fun getIntSafe(prefs: SharedPreferences, key: String, defaultValue: Int): Int {
+        return try {
+            prefs.getInt(key, defaultValue)
+        } catch (e: ClassCastException) {
+            // Flutter shared_preferences stores int as Long (64-bit)
+            prefs.getLong(key, defaultValue.toLong()).toInt()
+        } catch (e: Exception) {
+            defaultValue
         }
-
-        // 2. Whitelist Mode: Only Contacts
-        if (whitelistMode) {
-            if (!isContact(phoneNumber)) {
-                rejectCall(callDetails, "Whitelist Mode: Not in contacts")
-                return
-            }
-        }
-
-        // 3. Frequency Limit
-        if (isFrequencyExceeded(phoneNumber, maxCalls, timeWindow)) {
-            rejectCall(callDetails, "Frequency Limit: Exceeded $maxCalls calls in $timeWindow mins")
-            return
-        }
-
-        allowCall(callDetails)
     }
 
     private fun allowCall(callDetails: Call.Details) {
@@ -70,7 +87,7 @@ class CallScreeningServiceImpl : CallScreeningService() {
     }
 
     private fun rejectCall(callDetails: Call.Details, reason: String) {
-        Log.d(TAG, "Rejecting call: $reason")
+        Log.d(TAG, "REJECTING CALL: $reason")
         val response = CallResponse.Builder()
             .setDisallowCall(true)
             .setRejectCall(true)
@@ -79,7 +96,6 @@ class CallScreeningServiceImpl : CallScreeningService() {
             .build()
         respondToCall(callDetails, response)
         
-        // Broadcast event back to Flutter if app is running, or store in logs
         saveBlockedCallToLogs(callDetails.handle?.schemeSpecificPart ?: "Unknown", reason)
     }
 
@@ -112,19 +128,16 @@ class CallScreeningServiceImpl : CallScreeningService() {
         val now = System.currentTimeMillis()
         val windowMs = windowMins * 60 * 1000L
         
-        // Load recent calls for this number
         val historyKey = "flutter.history_$number"
         val historyStr = prefs.getString(historyKey, "") ?: ""
         val timestamps = if (historyStr.isEmpty()) mutableListOf() else historyStr.split(",").mapNotNull { it.toLongOrNull() }.toMutableList()
         
-        // Filter out old timestamps
         val recentTimestamps = timestamps.filter { now - it < windowMs }.toMutableList()
         
         if (recentTimestamps.size >= max) {
             return true
         }
         
-        // Add current call to history
         recentTimestamps.add(now)
         prefs.edit().putString(historyKey, recentTimestamps.joinToString(",")).apply()
         return false
@@ -134,7 +147,6 @@ class CallScreeningServiceImpl : CallScreeningService() {
         val logs = prefs.getString("flutter.blockedLogs", "") ?: ""
         val newLog = "${System.currentTimeMillis()}|$number|$reason"
         val updatedLogs = if (logs.isEmpty()) newLog else "$newLog\n$logs"
-        // Keep only last 50 logs
         val limitedLogs = updatedLogs.split("\n").take(50).joinToString("\n")
         prefs.edit().putString("flutter.blockedLogs", limitedLogs).apply()
     }
