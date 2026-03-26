@@ -6,9 +6,10 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
 
     <application
-        android:label="customize_call"
+        android:label="ShieldCall"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false">
         <service
             android:name=".CallScreeningServiceImpl"
             android:permission="android.permission.BIND_SCREENING_SERVICE"

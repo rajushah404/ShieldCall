@@ -1,4 +1,4 @@
-package com.example.call_rejecter.customize_call
+package com.rajushah.shieldcall
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -41,8 +41,14 @@ class CallScreeningServiceImpl : CallScreeningService() {
             val timeWindow = getIntSafe(prefs, "flutter.timeWindow", 5)
             val focusMode = prefs.getBoolean("flutter.focusMode", false)
             val whitelistMode = prefs.getBoolean("flutter.whitelistMode", false)
+            val blockAll = prefs.getBoolean("flutter.blockAll", false)
 
-            Log.d(TAG, "Rules: Whitelist=$whitelistMode, Focus=$focusMode, Max=$maxCalls/$timeWindow")
+            Log.d(TAG, "Rules: BlockAll=$blockAll, Whitelist=$whitelistMode, Focus=$focusMode, Max=$maxCalls/$timeWindow")
+
+            if (blockAll) {
+                rejectCall(callDetails, "Extreme Mode: Block All Calls")
+                return
+            }
 
             if (focusMode) {
                 if (!isStarredContact(phoneNumber)) {
