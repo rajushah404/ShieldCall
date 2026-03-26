@@ -1,4 +1,4 @@
-package com.example.call_rejecter.customize_call
+package com.rajushah.shieldcall
 
 import android.content.Context
 import android.content.SharedPreferences

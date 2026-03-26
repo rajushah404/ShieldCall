@@ -1,4 +1,4 @@
-package com.example.call_rejecter.customize_call
+package com.rajushah.shieldcall
 
 import android.app.role.RoleManager
 import android.content.Context
@@ -11,7 +11,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.example.call_rejecter/call_screening"
+    private val CHANNEL = "com.rajushah.shieldcall/call_screening"
     private val REQUEST_ID_SCREENING_ROLE = 1
     private var pendingResult: MethodChannel.Result? = null
 
