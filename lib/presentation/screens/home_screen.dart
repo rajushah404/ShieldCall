@@ -43,32 +43,34 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _currentIndex == 0 ? 'Call Shield Setup' : 'Blocked Call Logs',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          _currentIndex == 0 ? 'Shield' : 'History',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: true,
       ),
       body: IndexedStack(
         index: _currentIndex,
-        children: [
-          _buildSettingsView(context),
-          const LogsScreen(),
-        ],
+        children: [_buildSettingsView(context), const LogsScreen()],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        elevation: 10,
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
+        selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontSize: 11),
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
+            icon: Icon(Icons.shield_outlined, size: 22),
+            activeIcon: Icon(Icons.shield, size: 22),
+            label: 'Shield',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.history_edu),
-            label: 'Blocked History',
+            icon: Icon(Icons.history_outlined, size: 22),
+            activeIcon: Icon(Icons.history, size: 22),
+            label: 'Logs',
           ),
         ],
       ),
@@ -85,71 +87,83 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         if (state is CallLoaded) {
           final settings = state.settings;
           return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 StatusCard(
                   isActive: settings.isDefaultApp,
-                  onRequestSetup: () => context.read<CallBloc>().add(RequestDefaultAppAction()),
-                ),
-                const SizedBox(height: 24),
-                _buildSectionCard(
-                  title: 'Core Blocking Mode',
-                  icon: Icons.shield,
-                  children: [
-                    SettingsTile(
-                      title: 'Enable Call Screening',
-                      subtitle: 'Master toggle for automatic screening',
-                      value: settings.blockEnabled,
-                      onChanged: (val) => context.read<CallBloc>().add(UpdateSetting('blockEnabled', val)),
-                      icon: Icons.block,
-                    ),
-                    SettingsTile(
-                      title: 'Extreme Block Mode',
-                      subtitle: 'Block ALL calls regardless of contact status',
-                      value: settings.blockAll,
-                      onChanged: (val) => context.read<CallBloc>().add(UpdateSetting('blockAll', val)),
-                      icon: Icons.dangerous,
-                    ),
-                  ],
+                  onRequestSetup: () =>
+                      context.read<CallBloc>().add(RequestDefaultAppAction()),
                 ),
                 const SizedBox(height: 16),
                 _buildSectionCard(
-                  title: 'Filtering Preferences',
-                  icon: Icons.filter_alt,
+                  title: 'Block Rules',
+                  icon: Icons.security,
                   children: [
                     SettingsTile(
-                      title: 'Whitelist Only',
+                      title: 'Call Screening',
+                      subtitle: 'Master toggle for all blocking',
+                      value: settings.blockEnabled,
+                      onChanged: (val) => context.read<CallBloc>().add(
+                        UpdateSetting('blockEnabled', val),
+                      ),
+                      icon: Icons.power_settings_new,
+                    ),
+                    SettingsTile(
+                      title: 'Extreme Block',
+                      subtitle: 'Block every incoming call',
+                      value: settings.blockAll,
+                      onChanged: (val) => context.read<CallBloc>().add(
+                        UpdateSetting('blockAll', val),
+                      ),
+                      icon: Icons.do_not_disturb_on,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildSectionCard(
+                  title: 'Filters',
+                  icon: Icons.tune,
+                  children: [
+                    SettingsTile(
+                      title: 'Contacts Only',
                       subtitle: 'Allow only saved contacts',
                       value: settings.whitelistMode,
-                      onChanged: (val) => context.read<CallBloc>().add(UpdateSetting('whitelistMode', val)),
-                      icon: Icons.contact_phone,
+                      onChanged: (val) => context.read<CallBloc>().add(
+                        UpdateSetting('whitelistMode', val),
+                      ),
+                      icon: Icons.people_outline,
                     ),
                     SettingsTile(
-                      title: 'Focus Favorites',
+                      title: 'Favorites Only',
                       subtitle: 'Allow only starred contacts',
                       value: settings.focusMode,
-                      onChanged: (val) => context.read<CallBloc>().add(UpdateSetting('focusMode', val)),
-                      icon: Icons.star,
+                      onChanged: (val) => context.read<CallBloc>().add(
+                        UpdateSetting('focusMode', val),
+                      ),
+                      icon: Icons.star_border,
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 _buildSectionCard(
-                  title: 'Frequency Limit',
-                  icon: Icons.av_timer,
-                  padding: const EdgeInsets.all(16),
+                  title: 'Spam Limit',
+                  icon: Icons.timer_outlined,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   children: [
                     FrequencySlider(
                       maxCalls: settings.maxCalls,
                       timeWindow: settings.timeWindow,
-                      onMaxCallsChanged: (val) => context.read<CallBloc>().add(UpdateSetting('maxCalls', val)),
-                      onTimeWindowChanged: (val) => context.read<CallBloc>().add(UpdateSetting('timeWindow', val)),
+                      onMaxCallsChanged: (val) => context.read<CallBloc>().add(
+                        UpdateSetting('maxCalls', val),
+                      ),
+                      onTimeWindowChanged: (val) => context
+                          .read<CallBloc>()
+                          .add(UpdateSetting('timeWindow', val)),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
               ],
             ),
           );
@@ -172,9 +186,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.02),
+        color: Colors.white.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -18,14 +18,19 @@ class SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: SwitchListTile(
-        secondary: Icon(icon),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle),
-        value: value,
-        onChanged: onChanged,
+    return SwitchListTile(
+      dense: true,
+      secondary: Icon(icon, size: 20),
+      title: Text(
+        title, 
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
       ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(fontSize: 11),
+      ),
+      value: value,
+      onChanged: onChanged,
     );
   }
 }

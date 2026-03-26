@@ -24,7 +24,7 @@ class LogsList extends StatelessWidget {
 
         return Card(
           elevation: 0,
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: const CircleAvatar(

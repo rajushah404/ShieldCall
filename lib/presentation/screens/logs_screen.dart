@@ -11,10 +11,6 @@ class LogsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Blocked Call History', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
       body: BlocBuilder<CallBloc, CallState>(
         builder: (context, state) {
           if (state is CallLoading) {
@@ -27,11 +23,15 @@ class LogsScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.history_toggle_off, size: 80, color: Colors.grey.withOpacity(0.5)),
+                    Icon(
+                      Icons.history_toggle_off,
+                      size: 60,
+                      color: Colors.grey.withValues(alpha: 0.5),
+                    ),
                     const SizedBox(height: 16),
                     const Text(
                       'No blocked calls yet.',
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                      style: TextStyle(fontSize: 15, color: Colors.grey),
                     ),
                   ],
                 ),

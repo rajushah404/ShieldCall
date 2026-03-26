@@ -17,6 +17,7 @@ class CallBloc extends Bloc<CallEvent, CallState> {
   Future<void> _onLoadSettings(LoadSettingsAndLogs event, Emitter<CallState> emit) async {
     emit(CallLoading());
     try {
+      await repository.requestPermissions();
       final settings = await repository.getSettings();
       final logs = await repository.getBlockedLogs();
       emit(CallLoaded(settings, logs));
@@ -37,6 +38,7 @@ class CallBloc extends Bloc<CallEvent, CallState> {
   }
 
   Future<void> _onRequestDefaultApp(RequestDefaultAppAction event, Emitter<CallState> emit) async {
+    await repository.requestPermissions();
     final bool isDefault = await repository.requestDefaultApp();
     if (state is CallLoaded) {
       final currentState = state as CallLoaded;
