@@ -33,13 +33,13 @@ class CallRejecterApp extends StatelessWidget {
     return BlocProvider(
       create: (context) => CallBloc(repository: repository)..add(LoadSettingsAndLogs()),
       child: MaterialApp(
-        title: 'Call Rejecter Pro',
+        title: 'ShieldCall',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           brightness: Brightness.dark,
-          primaryColor: const Color(0xFF6200EE),
+          primaryColor: const Color(0xFF673AB7),
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF6200EE),
+            seedColor: const Color(0xFF673AB7),
             brightness: Brightness.dark,
           ),
           useMaterial3: true,
